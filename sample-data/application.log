@@ -1,0 +1,16 @@
+2026-10-07T14:42:01Z INFO [api-gateway] [src/routes.py] GET /api/health completed status=200 latency=12ms
+2026-10-07T14:42:03Z INFO [auth-service] [src/session.py] session created user_id=usr_284
+2026-10-07T14:42:04Z DEBUG [worker] [src/queue.py] message acknowledged queue=notifications
+2026-10-07T14:42:08Z WARNING [api-gateway] [src/middleware.py] elevated latency route=/api/search latency=840ms
+2026-10-07T14:42:11Z INFO [search-service] [src/index.py] query completed hits=18 took=32ms
+2026-10-07T14:42:14Z ERROR [payments] [src/checkout.py] payment provider timeout after 5s
+2026-10-07T14:42:16Z INFO [database] [src/pool.py] connection pool healthy active=8 idle=12
+2026-10-07T14:42:19Z INFO [worker] [src/jobs.py] scheduled digest delivered recipients=42
+2026-10-07T14:42:25Z WARNING [auth-service] [src/ratelimit.py] rate limit approaching client=mobile-app
+2026-10-07T14:42:28Z ERROR [api-gateway] [src/client.py] upstream returned 502 service=inventory
+2026-10-07T14:42:31Z INFO [inventory] [src/catalog.py] cache refreshed entries=1240
+2026-10-07T14:42:37Z INFO [api-gateway] [src/routes.py] POST /api/orders completed status=201 latency=66ms
+2026-10-07T14:42:41Z DEBUG [worker] [src/queue.py] polling queue=emails wait=250ms
+2026-10-07T14:42:49Z CRITICAL [database] [src/replica.py] replication lag exceeded limit lag=18s
+2026-10-07T14:42:52Z INFO [auth-service] [src/session.py] token refreshed user_id=usr_091
+2026-10-07T14:43:02Z UNKNOWN FIELD [custom-agent] this raw-format line remains searchable

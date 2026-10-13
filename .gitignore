@@ -1,0 +1,17 @@
+.env
+.venv/
+.venv-rtla/
+venv/
+__pycache__/
+*.py[cod]
+*.tsbuildinfo
+.pytest_cache/
+.coverage
+htmlcov/
+data/
+node_modules/
+dist/
+*.db
+*.db-shm
+*.db-wal
+.DS_Store
