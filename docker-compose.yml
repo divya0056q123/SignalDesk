@@ -25,5 +25,19 @@ services:
       - backend
     restart: unless-stopped
 
+  # Optional PostgreSQL: start with `docker compose --profile postgres up` and set
+  # DATABASE_URL=postgresql://signaldesk:signaldesk@postgres:5432/signaldesk in .env
+  postgres:
+    image: postgres:16-alpine
+    profiles: ["postgres"]
+    environment:
+      POSTGRES_USER: signaldesk
+      POSTGRES_PASSWORD: signaldesk
+      POSTGRES_DB: signaldesk
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
 volumes:
   log-data:
+  pg-data:

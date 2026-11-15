@@ -4,7 +4,7 @@ from app.main import create_app
 
 
 def test_filters_and_validates_log_queries(tmp_path):
-    app = create_app(tmp_path / "test.db")
+    app = create_app(tmp_path / "test.db", auth_enabled=False)
     with TestClient(app) as client:
         assert client.get("/api/logs").status_code == 200
         upload = client.post(
@@ -26,7 +26,7 @@ def test_filters_and_validates_log_queries(tmp_path):
 
 
 def test_alert_rule_validation_and_triggering(tmp_path):
-    app = create_app(tmp_path / "test.db")
+    app = create_app(tmp_path / "test.db", auth_enabled=False)
     with TestClient(app) as client:
         created = client.post(
             "/api/alerts/rules",
@@ -48,7 +48,7 @@ def test_alert_rule_validation_and_triggering(tmp_path):
 
 
 def test_upload_validation_and_large_line_rejection(tmp_path):
-    app = create_app(tmp_path / "test.db")
+    app = create_app(tmp_path / "test.db", auth_enabled=False)
     with TestClient(app) as client:
         wrong_type = client.post("/api/logs/upload", files={"file": ("payload.csv", b"hello")})
         assert wrong_type.status_code == 415
@@ -62,7 +62,7 @@ def test_upload_validation_and_large_line_rejection(tmp_path):
 
 
 def test_websocket_delivers_new_log_event(tmp_path):
-    app = create_app(tmp_path / "test.db")
+    app = create_app(tmp_path / "test.db", auth_enabled=False)
     with TestClient(app) as client:
         with client.websocket_connect("/ws/logs") as websocket:
             response = client.post("/api/logs/generate", params={"count": 1})
@@ -74,7 +74,7 @@ def test_websocket_delivers_new_log_event(tmp_path):
 
 
 def test_websocket_delivers_triggered_alert(tmp_path):
-    app = create_app(tmp_path / "test.db")
+    app = create_app(tmp_path / "test.db", auth_enabled=False)
     with TestClient(app) as client:
         rule = client.post(
             "/api/alerts/rules",
@@ -93,7 +93,7 @@ def test_websocket_delivers_triggered_alert(tmp_path):
 
 
 def test_timeline_returns_ordered_minute_buckets(tmp_path):
-    app = create_app(tmp_path / "test.db")
+    app = create_app(tmp_path / "test.db", auth_enabled=False)
     with TestClient(app) as client:
         points = client.get("/api/timeline", params={"minutes": 3}).json()
         assert len(points) == 3

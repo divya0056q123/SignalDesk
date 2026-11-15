@@ -5,8 +5,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     DATABASE_PATH=/app/data/logs.db
 
 WORKDIR /app
-COPY backend/requirements.txt /app/backend/requirements.txt
-RUN pip install --no-cache-dir -r /app/backend/requirements.txt
+COPY backend/requirements.txt backend/requirements-postgres.txt /app/backend/
+RUN pip install --no-cache-dir -r /app/backend/requirements.txt -r /app/backend/requirements-postgres.txt
 COPY backend/app /app/backend/app
 COPY sample-data /app/sample-data
 RUN mkdir -p /app/data

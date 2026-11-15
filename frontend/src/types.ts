@@ -47,3 +47,23 @@ export interface LogFilters {
   service: string;
   range: string;
 }
+
+export interface Anomaly {
+  bucket: string;
+  metric: "errors" | "total";
+  observed: number;
+  expected: number;
+  score: number;
+  level: "medium" | "high";
+}
+
+export interface LogCluster {
+  id: string;
+  template: string;
+  count: number;
+  severity: Severity;
+  services: string[];
+  first_seen: string;
+  last_seen: string;
+  example: string;
+}

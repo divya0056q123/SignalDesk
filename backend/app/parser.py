@@ -32,7 +32,7 @@ _LEVELS: dict[str, Severity] = {
 }
 
 
-def _timestamp(value: str) -> datetime:
+def _timestamp(value: str) -> datetime | None:
     try:
         normalized = value.replace("Z", "+00:00")
         parsed = datetime.fromisoformat(normalized)
@@ -45,7 +45,17 @@ def _timestamp(value: str) -> datetime:
                 return datetime.strptime(value, fmt).astimezone(timezone.utc)
             except ValueError:
                 pass
-    return datetime.now(timezone.utc)
+    return None
+
+
+def _unparsed(text: str) -> dict[str, str | datetime]:
+    return {
+        "timestamp": datetime.now(timezone.utc),
+        "severity": "UNKNOWN",
+        "service": "unparsed",
+        "source": "raw",
+        "message": text,
+    }
 
 
 def parse_line(line: str) -> dict[str, str | datetime]:
@@ -54,8 +64,11 @@ def parse_line(line: str) -> dict[str, str | datetime]:
     match = _ISO_LINE.match(text)
     if match:
         values = match.groupdict()
+        timestamp = _timestamp(values["timestamp"])
+        if timestamp is None:
+            return _unparsed(text)
         return {
-            "timestamp": _timestamp(values["timestamp"]),
+            "timestamp": timestamp,
             "severity": _LEVELS[values["severity"].upper()],
             "service": (values["service"] or "application").strip(),
             "source": (values["source"] or "unknown").strip(),
@@ -76,9 +89,12 @@ def parse_line(line: str) -> dict[str, str | datetime]:
     match = _APACHE_LINE.match(text)
     if match:
         values = match.groupdict()
+        timestamp = _timestamp(values["timestamp"])
+        if timestamp is None:
+            return _unparsed(text)
         status = int(values["status"])
         return {
-            "timestamp": _timestamp(values["timestamp"]),
+            "timestamp": timestamp,
             "severity": "ERROR" if status >= 500 else "WARNING" if status >= 400 else "INFO",
             "service": "web",
             "source": "access",
@@ -95,13 +111,7 @@ def parse_line(line: str) -> dict[str, str | datetime]:
                 "%Y %b %d %H:%M:%S",
             ).replace(tzinfo=timezone.utc)
         except ValueError:
-            return {
-                "timestamp": datetime.now(timezone.utc),
-                "severity": "UNKNOWN",
-                "service": "unparsed",
-                "source": "raw",
-                "message": text,
-            }
+            return _unparsed(text)
         message = values["message"]
         severity = "ERROR" if re.search(r"\b(error|failed|failure)\b", message, re.I) else "INFO"
         return {
@@ -112,10 +122,4 @@ def parse_line(line: str) -> dict[str, str | datetime]:
             "message": message,
         }
 
-    return {
-        "timestamp": datetime.now(timezone.utc),
-        "severity": "UNKNOWN",
-        "service": "unparsed",
-        "source": "raw",
-        "message": text,
-    }
+    return _unparsed(text)

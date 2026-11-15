@@ -1,0 +1,114 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?Set POSTGRES_ADMIN_PASSWORD in .env.production}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?Set APP_DB_PASSWORD in .env.production}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres-init.sh:/docker-entrypoint-initdb.d/10-create-app-role.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks: [private]
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.production
+    environment:
+      APP_ENV: production
+      AUTH_ENABLED: "true"
+      ALLOW_REGISTRATION: "false"
+      SAMPLE_DATA_ENABLED: "false"
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env.production}
+      BOOTSTRAP_TOKEN: ${BOOTSTRAP_TOKEN:-}
+      SMTP_HOST: ${SMTP_HOST:?Set SMTP_HOST in .env.production}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:?Set SMTP_USERNAME in .env.production}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:?Set SMTP_PASSWORD in .env.production}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:?Set SMTP_FROM_EMAIL in .env.production}
+      SMTP_SECURITY: ${SMTP_SECURITY:-starttls}
+      PUBLIC_BASE_URL: https://${APP_DOMAIN:?Set APP_DOMAIN in .env.production}
+      DATABASE_URL: postgresql://rtla_app:${APP_DB_PASSWORD:?Set APP_DB_PASSWORD in .env.production}@postgres:5432/signaldesk
+      INGEST_API_KEY: ${INGEST_API_KEY:-}
+      INGEST_TENANT_ID: ${INGEST_TENANT_ID:-default}
+      WEBHOOK_URL: ${WEBHOOK_URL:-}
+      MAX_UPLOAD_BYTES: ${MAX_UPLOAD_BYTES:-5242880}
+      MAX_INGEST_BODY_BYTES: ${MAX_INGEST_BODY_BYTES:-10485760}
+      ALLOWED_HOSTS: ${APP_DOMAIN:?Set APP_DOMAIN in .env.production},localhost,127.0.0.1
+      CORS_ORIGINS: https://${APP_DOMAIN:?Set APP_DOMAIN in .env.production}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    expose: ["8000"]
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+    networks: [private]
+
+  frontend:
+    build:
+      context: frontend
+      dockerfile: Dockerfile.production
+    environment:
+      BACKEND_URL: http://backend:8000
+    depends_on:
+      backend:
+        condition: service_healthy
+    expose: ["8080"]
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /var/run
+      - /etc/nginx/conf.d
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    restart: unless-stopped
+    networks: [private]
+
+  caddy:
+    image: caddy:2-alpine
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?Set APP_DOMAIN in .env.production}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - frontend
+    restart: unless-stopped
+    networks: [private]
+
+volumes:
+  postgres-data:
+  caddy-data:
+  caddy-config:
+
+networks:
+  private:

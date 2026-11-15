@@ -15,7 +15,7 @@ describe("buildLogQuery", () => {
     expect(query.get("severity")).toBe("ERROR");
     expect(query.get("service")).toBe("payments");
     expect(query.has("start")).toBe(false);
-    expect(query.get("limit")).toBe("200");
+    expect(query.get("limit")).toBe("500");
   });
 
   it("applies a valid ISO time boundary for a selected range", () => {

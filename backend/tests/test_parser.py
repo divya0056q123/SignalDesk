@@ -39,3 +39,18 @@ def test_malformed_syslog_shaped_input_remains_visible():
     event = parse_line(line)
     assert event["severity"] == "UNKNOWN"
     assert event["message"] == line
+
+
+def test_invalid_iso_timestamp_is_preserved_as_unknown():
+    line = "not-a-date ERROR [payments] [checkout.py] charge timed out"
+    event = parse_line(line)
+    assert event["severity"] == "UNKNOWN"
+    assert event["service"] == "unparsed"
+    assert event["message"] == line
+
+
+def test_invalid_apache_timestamp_is_preserved_as_unknown():
+    line = '127.0.0.1 - - [not-a-date] "GET /health HTTP/1.1" 503 12'
+    event = parse_line(line)
+    assert event["severity"] == "UNKNOWN"
+    assert event["message"] == line
